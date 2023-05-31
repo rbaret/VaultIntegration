@@ -10,7 +10,7 @@ export MYSQL_VAULT_PASSWORD=$(openssl rand -base64 15)
 
 export VAULT_ADDR='localhost:8200'
 
-# Run the docker-compose file to depdoy Vault, mariadb and the app
+# Run the docker-compose file to depdoy Vault, mysql and the app
 docker-compose up -d
 sleep 5 # Wait for the containers to start
 echo "Enable mysqli extension for the app container"
@@ -21,14 +21,14 @@ echo "Inserting data into the database"
 docker exec -i database mysql -uroot -p${MYSQL_ROOT_PASSWORD} app < dump.sql
 
 echo "Creating a Vault user for the database"
-# Connect to the mariadb container and create a role with read-only access to the app database
+# Connect to the mysql container and create a role with read-only access to the app database
 docker exec -i database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE ROLE 'appreadonly'; GRANT SELECT ON app.* TO 'appreadonly';"
 
-# Connect to the mariadb container and create a role with read-write access to the app database
+# Connect to the mysql container and create a role with read-write access to the app database
 docker exec -i database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "CREATE ROLE 'appreadwrite'; GRANT SELECT, INSERT, UPDATE, DELETE ON app.* TO 'appreadwrite';"
 
 echo "Granting Vault user permissions to create other users and assign roles"
-# Connect to the mariadb container and grant vault user permissions to create other users
+# Connect to the mysql container and grant vault user permissions to create other users
 docker exec -i database mysql -uroot -p${MYSQL_ROOT_PASSWORD} -e "GRANT ALL PRIVILEGES ON *.* TO 'vault'@'%';FLUSH PRIVILEGES;"
 
 # Save the root token in a file
